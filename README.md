@@ -1,6 +1,5 @@
 <img src="https://raw.githubusercontent.com/KevDoy/mygram-app/refs/heads/main/assets/icon-512.png" height="70" alt>
 
-
 # mygram
 
 A static, Instagram-style photo portfolio website. Drop photos into a folder, run a script, and your site updates automatically. No server, no database, no build tools — just HTML, CSS, and vanilla JS.
@@ -9,8 +8,12 @@ A static, Instagram-style photo portfolio website. Drop photos into a folder, ru
 
 - **Grid view** — 3-column, 1:1 cropped photo grid (like Instagram profile)
 - **Timeline view** — Vertical card feed grouped by month
+- **Albums** — Curated photo collections with cover images, browsable in their own tab
 - **Lightbox** — Full-screen viewer with swipe gestures, keyboard nav, and photo metadata
-- **Deep-linking** — Every photo has a shareable URL (`#photo=slug`)
+- **Immersive mode** — Rotate to landscape on mobile for a distraction-free full-screen viewer with slide animations and pinch-to-zoom
+- **Palgram feed** — Follow friends' mygram sites in a combined feed
+- **Admin panel** — Browser-based editor for profile, photos, albums, and pals (no JSON editing required)
+- **Deep-linking** — Every photo and album has a shareable URL (`#photo=slug`, `#album=id`)
 - **Dark mode** — Automatic via `prefers-color-scheme`
 - **Responsive images** — 3 thumbnail sizes (360 / 640 / 1080px) with `srcset`
 - **Lazy loading** — IntersectionObserver with shimmer placeholders
@@ -24,12 +27,13 @@ A static, Instagram-style photo portfolio website. Drop photos into a folder, ru
 # 1. Install dependencies (macOS)
 brew install exiftool imagemagick jq
 
-# 2. Clone and enter the project
+# 2. Fork the repo on GitHub, then clone your fork
 git clone https://github.com/YOUR_USERNAME/mygram.git
 cd mygram
 
 # 3. Customise your profile
-#    Edit data/photos.json — update username, fullName, bio, bioLink
+#    Navigate to http://localhost:8000/admin.html to edit profile, photos, albums, and pals
+#    — or edit data/photos.json directly
 #    Replace assets/profile.jpg with your photo
 #    Replace assets/icon.png with your app icon (square PNG, 512px+)
 
@@ -53,17 +57,24 @@ python3 -m http.server 8000
 ```
 mygram/
 ├── index.html                  ← Single-page app
+├── admin.html                  ← Admin panel (profile, photos, albums, pals)
 ├── manifest.json               ← PWA web app manifest
 ├── css/
-│   └── style.css               ← All styles (light + dark mode)
+│   ├── style.css               ← All styles (light + dark mode)
+│   └── admin.css               ← Admin panel styles
 ├── js/
-│   ├── app.js                  ← Entry point, loads JSON, populates profile
+│   ├── app.js                  ← Entry point, loads JSON, initialises modules
 │   ├── grid.js                 ← 3-column photo grid with srcset
 │   ├── timeline.js             ← Feed view with month grouping
-│   ├── lightbox.js             ← Full-screen viewer, deep-linking, swipe
-│   └── lazyload.js             ← IntersectionObserver lazy loading
+│   ├── lightbox.js             ← Full-screen viewer, deep-linking, swipe, immersive mode
+│   ├── albums.js               ← Album grid, detail view, album-scoped lightbox
+│   ├── palgram.js              ← Combined feed from friends' mygram sites
+│   ├── lazyload.js             ← IntersectionObserver lazy loading
+│   └── admin.js                ← Admin panel logic (CRUD for all data)
 ├── data/
-│   └── photos.json             ← Photo manifest + profile config
+│   └── photos.json             ← Photo manifest + profile config + albums
+├── palgram/
+│   └── pals.json               ← List of friends' mygram URLs
 ├── photos/
 │   ├── originals/              ← Drop full-res photos here
 │   ├── web/                    ← Auto-generated WebP (70% quality, max 2048px)
@@ -83,9 +94,64 @@ mygram/
     └── process-photos.sh       ← macOS photo processing script
 ```
 
+## Admin Panel
+
+Navigate to `/admin.html` on your local server (e.g. `http://localhost:8000/admin.html`). It needs a web server to read the JSON data files. It lets you:
+
+- **Edit your profile** — username, display name, bio, website link, profile photo path
+- **Manage photos** — edit captions, delete photos from the manifest
+- **Create & edit albums** — pick photos, set a cover, add titles and descriptions
+- **Manage pals** — add or remove friends' mygram URLs for the Palgram feed
+
+Changes are saved by downloading the updated JSON files. Drop them back into your repo to apply.
+
+## Albums
+
+Albums are curated collections of your photos. A photo can belong to multiple albums.
+
+Albums are stored in `data/photos.json` under the `albums` array:
+
+```json
+{
+  "albums": [
+    {
+      "id": "tokyo-2025",
+      "title": "Tokyo 2025",
+      "cover": "tokyo-tower.jpg",
+      "description": "A week in Tokyo",
+      "photos": ["tokyo-tower.jpg", "shibuya.jpg", "ramen.jpg"]
+    }
+  ]
+}
+```
+
+Create and manage albums from the Admin panel — no need to edit JSON by hand.
+
+## Palgram
+
+Follow your friends' mygram sites. Add their URLs to `palgram/pals.json` (or use the Admin panel):
+
+```json
+{
+  "pals": [
+    "https://friend.github.io/mygram/"
+  ]
+}
+```
+
+Their photos appear in the Palgram tab, merged into a single feed sorted by date.
+
+## Lightbox
+
+The lightbox supports multiple interaction modes:
+
+- **Desktop** — Side panel with metadata, arrow key navigation, click arrows
+- **Mobile (portrait)** — Swipe left/right to navigate, bottom info panel
+- **Mobile (landscape)** — Immersive full-screen mode with black background, slide animations, pinch-to-zoom (bounces back on release), and swipe down to close
+
 ## Configuration
 
-Edit `data/photos.json` to set your profile:
+Edit `data/photos.json` to set your profile (or use the Admin panel):
 
 ```json
 {
@@ -129,7 +195,7 @@ Re-running the script is safe — it skips photos already in the manifest.
 
 The site is fully static. Deploy anywhere:
 
-- **GitHub Pages** — Push to `main`, enable Pages in repo settings
+- **GitHub Pages** — Fork the repo, push to `main`, enable Pages in repo settings
 - **Netlify / Vercel** — Connect the repo, no build command needed
 - **Any web server** — Just copy all files
 

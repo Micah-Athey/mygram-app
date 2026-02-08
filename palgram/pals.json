@@ -1,0 +1,5 @@
+{
+  "_instructions": "Add your friends' mygram URLs below. Each entry needs a \"url\" pointing to the root of their mygram site.",
+  "_example": { "url": "https://friendname.github.io/mygram/" },
+  "pals": []
+}

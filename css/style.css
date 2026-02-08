@@ -70,6 +70,27 @@ body {
   color: var(--text-primary) !important;
 }
 
+/* Nav view links (mygram / palgram) */
+.nav-view-link {
+  opacity: 0.4;
+  transition: opacity 0.2s;
+  text-decoration: none !important;
+  cursor: pointer;
+  margin-right: 1.25rem;
+}
+
+.nav-view-link:last-child {
+  margin-right: 0;
+}
+
+.nav-view-link.active {
+  opacity: 1;
+}
+
+.nav-view-link:hover {
+  opacity: 0.8;
+}
+
 /* ---------- Profile Header ---------- */
 #profile-header {
   max-width: 935px;
@@ -481,4 +502,17 @@ main.container {
 
 .empty-state code {
   color: var(--text-secondary);
+}
+
+/* ---------- Palgram view ---------- */
+#palgram-view {
+  max-width: 935px;
+}
+
+#palgram-view .timeline-card .card-header strong {
+  font-size: 0.875rem;
+}
+
+#palgram-view .timeline-card .card-header img {
+  border: 2px solid var(--border-color);
 }

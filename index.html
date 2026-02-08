@@ -41,8 +41,9 @@
 
   <!-- ===== NAV BAR ===== -->
   <nav class="navbar border-bottom sticky-top">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="#">mygram</a>
+    <div class="container d-flex align-items-center">
+      <a class="navbar-brand fw-bold mb-0 nav-view-link active" href="#" data-view="mygram">mygram</a>
+      <a class="navbar-brand fw-bold mb-0 nav-view-link" href="#" data-view="palgram">palgram</a>
     </div>
   </nav>
 
@@ -105,7 +106,7 @@
   </div>
 
   <!-- ===== CONTENT AREA ===== -->
-  <main class="container pb-5">
+  <main class="container pb-5" id="mygram-content">
     <div class="tab-content" id="viewTabContent">
 
       <!-- Grid View -->
@@ -122,6 +123,13 @@
         </div>
       </div>
 
+    </div>
+  </main>
+
+  <!-- ===== PALGRAM VIEW (separate from tab content) ===== -->
+  <main class="container pb-5 d-none" id="palgram-view">
+    <div class="timeline" id="palgramTimeline">
+      <!-- Dynamically populated by js/palgram.js -->
     </div>
   </main>
 
@@ -175,6 +183,7 @@
   <script src="js/grid.js"></script>
   <script src="js/timeline.js"></script>
   <script src="js/lightbox.js"></script>
+  <script src="js/palgram.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

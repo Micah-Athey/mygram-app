@@ -82,6 +82,50 @@
   if (typeof LightboxModule !== "undefined") LightboxModule.init(photos);
   if (typeof LazyLoad !== "undefined") LazyLoad.observe();
 
+  // ---- Palgram: lazy-init on first switch ----
+  let palgramLoaded = false;
+
+  // ---- Nav view switching (mygram ↔ palgram) ----
+  const profileHeader = document.getElementById("profile-header");
+  const viewTabsContainer = document.querySelector("#viewTabs")?.closest(".container");
+  const mygramContent = document.getElementById("mygram-content");
+  const palgramView = document.getElementById("palgram-view");
+
+  document.querySelectorAll(".nav-view-link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const view = link.dataset.view;
+
+      // Update active nav link
+      document.querySelectorAll(".nav-view-link").forEach((l) => l.classList.remove("active"));
+      link.classList.add("active");
+
+      if (view === "palgram") {
+        // Hide profile header and mygram tabs/content
+        if (profileHeader) profileHeader.classList.add("d-none");
+        if (viewTabsContainer) viewTabsContainer.classList.add("d-none");
+        if (mygramContent) mygramContent.classList.add("d-none");
+        if (palgramView) palgramView.classList.remove("d-none");
+
+        // Lazy-load palgram data on first visit
+        if (!palgramLoaded && typeof PalgramModule !== "undefined") {
+          palgramLoaded = true;
+          PalgramModule.init(photos, profile);
+        } else if (typeof LazyLoad !== "undefined") {
+          LazyLoad.refresh();
+        }
+      } else {
+        // Show profile header and mygram tabs/content
+        if (profileHeader) profileHeader.classList.remove("d-none");
+        if (viewTabsContainer) viewTabsContainer.classList.remove("d-none");
+        if (mygramContent) mygramContent.classList.remove("d-none");
+        if (palgramView) palgramView.classList.add("d-none");
+      }
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
   // ---- Refresh lazy-load & scroll-to-top when switching tabs ----
   document.querySelectorAll('#viewTabs button[data-bs-toggle="tab"]').forEach((tab) => {
     tab.addEventListener("shown.bs.tab", () => {

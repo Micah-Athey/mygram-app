@@ -1,9 +1,9 @@
 {
   "profile": {
-    "username": "username",
-    "fullName": "Your Name",
+    "username": "m_athey",
+    "fullName": "Micah Athey",
     "bio": "Photographer · Traveller",
-    "bioLink": "https://yourwebsite.com",
+    "bioLink": "https://micah-athey.github.io/mygram-app/",
     "profilePhoto": "assets/profile.jpg"
   },
   "photos": []

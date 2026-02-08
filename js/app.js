@@ -10,7 +10,7 @@
   // ---- Load JSON ----
   let data = {};
   try {
-    const res = await fetch(DATA_URL);
+    const res = await fetch(DATA_URL, { cache: "no-cache" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
   } catch (err) {

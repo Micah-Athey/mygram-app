@@ -414,10 +414,10 @@ main.container {
     border-top: 1px solid var(--border-light);
   }
 
-  /* Move nav arrows into the photo area */
+  /* Hide nav arrows on mobile — swipe is the primary gesture */
   .lightbox-prev,
   .lightbox-next {
-    top: 30%;
+    display: none !important;
   }
 }
 
@@ -462,6 +462,61 @@ main.container {
   .lightbox-next {
     right: -50px;
   }
+}
+
+/* ---------- Lightbox Immersive (landscape) ---------- */
+#lightboxModal.lightbox-immersive .modal-dialog {
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+}
+
+#lightboxModal.lightbox-immersive .modal-content {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background: #000 !important;
+}
+
+#lightboxModal.lightbox-immersive .modal-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+#lightboxModal.lightbox-immersive .lightbox-layout {
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+}
+
+#lightboxModal.lightbox-immersive .lightbox-photo-container {
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  background: #000;
+}
+
+#lightboxModal.lightbox-immersive .lightbox-photo {
+  max-height: 100vh;
+  max-width: 100vw;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#lightboxModal.lightbox-immersive .lightbox-info,
+#lightboxModal.lightbox-immersive .btn-close,
+#lightboxModal.lightbox-immersive .lightbox-nav {
+  display: none !important;
+}
+
+#lightboxModal.lightbox-immersive .modal-backdrop {
+  background: #000;
 }
 
 /* ---------- Lazy-load placeholder ---------- */
@@ -716,4 +771,14 @@ main.container {
   .album-photo-item:hover .overlay {
     opacity: 1;
   }
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-top: 2rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
 }

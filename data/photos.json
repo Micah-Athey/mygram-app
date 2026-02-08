@@ -116,6 +116,24 @@
       "height": 3888
     },
     {
+      "filename": "IMG_4568.jpg",
+      "web": "IMG_4568.webp",
+      "thumbnail": "thumb_IMG_4568.webp",
+      "slug": "img-4568",
+      "date": "2026-02-07T17:37:02",
+      "caption": "",
+      "camera": "Canon EOS DIGITAL REBEL XS",
+      "lens": "EF-S18-55mm f/3.5-5.6 IS",
+      "settings": "25.0 mm f/8.0 1/500s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3906,
+      "height": 2602
+    },
+    {
       "filename": "WindsorAughtry-Kevs-edits.jpg",
       "web": "WindsorAughtry-Kevs-edits.webp",
       "thumbnail": "thumb_WindsorAughtry-Kevs-edits.webp",
@@ -132,6 +150,42 @@
       },
       "width": 1251,
       "height": 834
+    },
+    {
+      "filename": "IMG_4564.jpg",
+      "web": "IMG_4564.webp",
+      "thumbnail": "thumb_IMG_4564.webp",
+      "slug": "img-4564",
+      "date": "2026-02-06T09:23:13",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "21.0 mm f/8.0 1/13s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
+      "filename": "IMG_4473.jpg",
+      "web": "IMG_4473.webp",
+      "thumbnail": "thumb_IMG_4473.webp",
+      "slug": "img-4473",
+      "date": "2026-02-06T07:48:37",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "18.0 mm f/9.0 1/60s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 2592,
+      "height": 2592
     },
     {
       "filename": "IMG_4416.JPG",

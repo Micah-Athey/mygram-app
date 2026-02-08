@@ -6,5 +6,114 @@
     "bioLink": "https://micah-athey.github.io/mygram-app/",
     "profilePhoto": "assets/profile.jpg"
   },
-  "photos": []
+  "photos": [
+    {
+      "filename": "IMG_4665.jpeg",
+      "web": "IMG_4665.webp",
+      "thumbnail": "thumb_IMG_4665.webp",
+      "slug": "img-4665",
+      "date": "2026-02-07T18:12:18",
+      "caption": "",
+      "camera": "Canon EOS DIGITAL REBEL XS",
+      "lens": "",
+      "settings": "53.0 mm f/9.0 1/25s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 2592,
+      "height": 3888
+    },
+    {
+      "filename": "IMG_4660.JPG",
+      "web": "IMG_4660.webp",
+      "thumbnail": "thumb_IMG_4660.webp",
+      "slug": "img-4660",
+      "date": "2026-02-07T18:11:24",
+      "caption": "",
+      "camera": "Canon EOS DIGITAL REBEL XS",
+      "lens": "EF-S18-55mm f/3.5-5.6 IS",
+      "settings": "48.0 mm f/13.0 1/200s ISO 400",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 2816,
+      "height": 1880
+    },
+    {
+      "filename": "IMG_4636.jpeg",
+      "web": "IMG_4636.webp",
+      "thumbnail": "thumb_IMG_4636.webp",
+      "slug": "img-4636",
+      "date": "2026-02-07T18:06:50",
+      "caption": "",
+      "camera": "Canon EOS DIGITAL REBEL XS",
+      "lens": "",
+      "settings": "55.0 mm f/13.0 1/40s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
+      "filename": "IMG_4616.jpeg",
+      "web": "IMG_4616.webp",
+      "thumbnail": "thumb_IMG_4616.webp",
+      "slug": "img-4616",
+      "date": "2026-02-07T18:00:41",
+      "caption": "",
+      "camera": "Canon EOS DIGITAL REBEL XS",
+      "lens": "",
+      "settings": "18.0 mm f/11.0 1/15s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
+      "filename": "IMG_4599.jpeg",
+      "web": "IMG_4599.webp",
+      "thumbnail": "thumb_IMG_4599.webp",
+      "slug": "img-4599",
+      "date": "2026-02-07T17:55:03",
+      "caption": "",
+      "camera": "Canon EOS DIGITAL REBEL XS",
+      "lens": "",
+      "settings": "55.0 mm f/14.0 1/80s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
+      "filename": "IMG_4416.JPG",
+      "web": "IMG_4416.webp",
+      "thumbnail": "thumb_IMG_4416.webp",
+      "slug": "img-4416",
+      "date": "2026-02-06T07:07:03",
+      "caption": "",
+      "camera": "Canon EOS DIGITAL REBEL XS",
+      "lens": "EF-S18-55mm f/3.5-5.6 IS",
+      "settings": "28.0 mm f/8.0 1s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    }
+  ]
 }

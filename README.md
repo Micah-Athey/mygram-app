@@ -1,3 +1,6 @@
+<img src="https://raw.githubusercontent.com/KevDoy/mygram-app/refs/heads/main/assets/icon-512.png" height="70" alt>
+
+
 # mygram
 
 A static, Instagram-style photo portfolio website. Drop photos into a folder, run a script, and your site updates automatically. No server, no database, no build tools — just HTML, CSS, and vanilla JS.

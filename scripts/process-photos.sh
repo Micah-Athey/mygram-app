@@ -61,6 +61,9 @@ WEB_MAX_DIMENSION="2048"
 # Supported image extensions (lowercase checked)
 SUPPORTED_EXTENSIONS="jpg|jpeg|png|tiff|tif|heic|heif|webp|avif|bmp"
 
+# Supported video extensions
+VIDEO_EXTENSIONS="mp4|mov|avi|mkv|webm|m4v"
+
 # ---- Check dependencies ----
 missing=()
 command -v exiftool >/dev/null 2>&1 || missing+=("exiftool")
@@ -86,9 +89,27 @@ fi
 # ---- Ensure directories exist ----
 mkdir -p "$ORIGINALS_DIR" "$THUMBS_DIR" "$THUMBS_640_DIR" "$THUMBS_360_DIR" "$WEB_DIR"
 
+# Check for ffmpeg (optional – only needed for video files)
+HAS_FFMPEG=false
+command -v ffmpeg >/dev/null 2>&1 && HAS_FFMPEG=true
+
 # ---- Ensure JSON file exists ----
 if [[ ! -f "$JSON_FILE" ]]; then
-  echo '{"profile":{},"photos":[]}' | jq . > "$JSON_FILE"
+  echo '{"profile":{},"photos":[],"albums":[]}' | jq . > "$JSON_FILE"
+fi
+
+# ---- Migrate old-format entries (add media array if missing) ----
+needs_migration=$(jq '[.photos[] | select(.media == null)] | length' "$JSON_FILE" 2>/dev/null || echo "0")
+if [[ "$needs_migration" -gt 0 ]]; then
+  echo "🔄  Migrating $needs_migration photo(s) to new media format..."
+  tmp=$(mktemp)
+  jq '.photos = [.photos[] |
+    if .media == null then
+      . + { media: [{ type: "image", web: .web, thumbnail: .thumbnail }] }
+    else . end
+  ]' "$JSON_FILE" > "$tmp"
+  mv "$tmp" "$JSON_FILE"
+  echo "   ✓ Migration complete – added media[] to existing entries"
 fi
 
 # ---- Collect already-known filenames ----
@@ -127,8 +148,19 @@ for filepath in "$ORIGINALS_DIR"/*; do
   # ---- Check file extension is a supported image type ----
   ext="${filename##*.}"
   ext_lower=$(echo "$ext" | tr '[:upper:]' '[:lower:]')
-  if ! echo "$ext_lower" | grep -qE "^($SUPPORTED_EXTENSIONS)$"; then
-    echo "⏭  Skipping non-image file: $filename"
+  # Determine file type
+  is_video=false
+  if echo "$ext_lower" | grep -qE "^($VIDEO_EXTENSIONS)$"; then
+    is_video=true
+  elif ! echo "$ext_lower" | grep -qE "^($SUPPORTED_EXTENSIONS)$"; then
+    echo "⏭  Skipping unsupported file: $filename"
+    skipped_count=$((skipped_count + 1))
+    continue
+  fi
+
+  # Skip video if ffmpeg is not installed
+  if $is_video && ! $HAS_FFMPEG; then
+    echo "⏭  Skipping video (ffmpeg not installed): $filename"
     skipped_count=$((skipped_count + 1))
     continue
   fi
@@ -139,6 +171,101 @@ for filepath in "$ORIGINALS_DIR"/*; do
   fi
 
   echo "→ Processing: $filename"
+
+  if $is_video; then
+    # ---- Video processing ----
+    web_filename="${filename%.*}.mp4"
+    poster_filename="${filename%.*}-poster.webp"
+    thumb_filename="thumb_${filename%.*}.webp"
+
+    # Generate web-optimized MP4 (H.264 + AAC, faststart for streaming)
+    ffmpeg -y -i "$filepath" \
+      -c:v libx264 -crf 23 -preset medium \
+      -c:a aac -b:a 128k \
+      -movflags +faststart \
+      -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease" \
+      "$WEB_DIR/$web_filename" 2>/dev/null
+    echo "   ✓ Web-optimized video → $web_filename"
+
+    # Extract poster frame (at 1s, or first frame if too short)
+    ffmpeg -y -i "$filepath" -vframes 1 -ss 00:00:01 \
+      -vf "scale='min(2048,iw)':'min(2048,ih)':force_original_aspect_ratio=decrease" \
+      "$WEB_DIR/$poster_filename" 2>/dev/null || \
+    ffmpeg -y -i "$filepath" -vframes 1 \
+      -vf "scale='min(2048,iw)':'min(2048,ih)':force_original_aspect_ratio=decrease" \
+      "$WEB_DIR/$poster_filename" 2>/dev/null
+    echo "   ✓ Poster frame → $poster_filename"
+
+    # Generate thumbnails from poster
+    $MAGICK_CMD "$WEB_DIR/$poster_filename" -auto-orient \
+      -thumbnail "${THUMB_SIZE}^" -gravity center -extent "$THUMB_SIZE" \
+      -quality "$THUMB_QUALITY" "$THUMBS_DIR/$thumb_filename"
+    $MAGICK_CMD "$WEB_DIR/$poster_filename" -auto-orient \
+      -thumbnail "${THUMB_640_SIZE}^" -gravity center -extent "$THUMB_640_SIZE" \
+      -quality "$THUMB_QUALITY" "$THUMBS_640_DIR/$thumb_filename"
+    $MAGICK_CMD "$WEB_DIR/$poster_filename" -auto-orient \
+      -thumbnail "${THUMB_360_SIZE}^" -gravity center -extent "$THUMB_360_SIZE" \
+      -quality "$THUMB_QUALITY" "$THUMBS_360_DIR/$thumb_filename"
+    echo "   ✓ Thumbnails → 1080 / 640 / 360"
+
+    # Extract video metadata
+    date=$(ffprobe -v quiet -print_format json -show_entries format_tags=creation_time \
+      "$filepath" 2>/dev/null | jq -r '.format.tags.creation_time // empty' | cut -c1-19 || echo "")
+    if [[ -z "$date" ]]; then
+      date=$(stat -f "%Sm" -t "%Y-%m-%dT%H:%M:%S" "$filepath" 2>/dev/null || echo "")
+    fi
+    duration=$(ffprobe -v quiet -print_format json -show_entries format=duration \
+      "$filepath" 2>/dev/null | jq -r '.format.duration // empty')
+    duration_str=""
+    if [[ -n "$duration" ]]; then
+      dur_int=${duration%.*}
+      duration_str=$(printf "%d:%02d" "$((dur_int / 60))" "$((dur_int % 60))")
+    fi
+
+    photo_caption="$CAPTION"
+    slug=$(echo "${filename%.*}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+
+    new_entry=$(jq -n \
+      --arg fn "$filename" \
+      --arg wf "$poster_filename" \
+      --arg th "$thumb_filename" \
+      --arg sl "$slug" \
+      --arg dt "$date" \
+      --arg cap "$photo_caption" \
+      --arg vweb "$web_filename" \
+      --arg poster "$poster_filename" \
+      --arg dur "$duration_str" \
+      '{
+        filename: $fn,
+        web: $wf,
+        thumbnail: $th,
+        slug: $sl,
+        date: $dt,
+        caption: $cap,
+        camera: "",
+        lens: "",
+        settings: "",
+        location: "",
+        gps: { lat: "", lon: "" },
+        width: null,
+        height: null,
+        media: [{
+          type: "video",
+          web: $vweb,
+          poster: $poster,
+          thumbnail: $th,
+          duration: $dur
+        }]
+      }')
+
+    tmp=$(mktemp)
+    jq --argjson entry "$new_entry" '.photos = [$entry] + .photos' "$JSON_FILE" > "$tmp"
+    mv "$tmp" "$JSON_FILE"
+
+    new_count=$((new_count + 1))
+    echo "   ✓ Added to photos.json"
+    continue
+  fi
 
   # ---- Extract EXIF via exiftool (JSON output) ----
   exif_json=$(exiftool -json -d "%Y-%m-%dT%H:%M:%S" \
@@ -277,7 +404,8 @@ for filepath in "$ORIGINALS_DIR"/*; do
       location: $loc,
       gps: { lat: $lat, lon: $lon },
       width: ($w | if . != "" then tonumber else null end),
-      height: ($h | if . != "" then tonumber else null end)
+      height: ($h | if . != "" then tonumber else null end),
+      media: [{ type: "image", web: $wf, thumbnail: $th }]
     }')
 
   # ---- Prepend to photos array ----
@@ -287,6 +415,213 @@ for filepath in "$ORIGINALS_DIR"/*; do
 
   new_count=$((new_count + 1))
   echo "   ✓ Added to photos.json"
+done
+
+# ---- Process multi-photo post directories ----
+for dirpath in "$ORIGINALS_DIR"/*/; do
+  [[ ! -d "$dirpath" ]] && continue
+  dirname="$(basename "$dirpath")"
+  [[ "$dirname" == .* ]] && continue
+
+  # Skip if already tracked
+  if echo "$known_files" | grep -qxF "$dirname"; then
+    continue
+  fi
+
+  echo "→ Processing multi-photo post: $dirname/"
+
+  media_json="[]"
+  first_web=""
+  first_thumb=""
+  latest_date=""
+  post_camera=""
+  post_lens=""
+  post_settings=""
+  post_location=""
+  post_gps_lat=""
+  post_gps_lon=""
+  media_count=0
+
+  for img_filepath in "$dirpath"/*; do
+    [[ ! -f "$img_filepath" ]] && continue
+    img_filename="$(basename "$img_filepath")"
+    [[ "$img_filename" == .* ]] && continue
+
+    img_ext="${img_filename##*.}"
+    img_ext_lower=$(echo "$img_ext" | tr '[:upper:]' '[:lower:]')
+
+    item_is_video=false
+    if echo "$img_ext_lower" | grep -qE "^($VIDEO_EXTENSIONS)$"; then
+      item_is_video=true
+      if ! $HAS_FFMPEG; then
+        echo "   ⏭  Skipping video (ffmpeg not installed): $img_filename"
+        continue
+      fi
+    elif ! echo "$img_ext_lower" | grep -qE "^($SUPPORTED_EXTENSIONS)$"; then
+      continue
+    fi
+
+    media_count=$((media_count + 1))
+    echo "   → [$media_count] $img_filename"
+
+    if $item_is_video; then
+      v_web="${dirname}-${img_filename%.*}.mp4"
+      v_poster="${dirname}-${img_filename%.*}-poster.webp"
+      v_thumb="thumb_${dirname}-${img_filename%.*}.webp"
+
+      ffmpeg -y -i "$img_filepath" \
+        -c:v libx264 -crf 23 -preset medium \
+        -c:a aac -b:a 128k -movflags +faststart \
+        -vf "scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease" \
+        "$WEB_DIR/$v_web" 2>/dev/null
+
+      ffmpeg -y -i "$img_filepath" -vframes 1 -ss 00:00:01 \
+        "$WEB_DIR/$v_poster" 2>/dev/null || \
+      ffmpeg -y -i "$img_filepath" -vframes 1 \
+        "$WEB_DIR/$v_poster" 2>/dev/null
+
+      $MAGICK_CMD "$WEB_DIR/$v_poster" -auto-orient \
+        -thumbnail "${THUMB_SIZE}^" -gravity center -extent "$THUMB_SIZE" \
+        -quality "$THUMB_QUALITY" "$THUMBS_DIR/$v_thumb"
+      $MAGICK_CMD "$WEB_DIR/$v_poster" -auto-orient \
+        -thumbnail "${THUMB_640_SIZE}^" -gravity center -extent "$THUMB_640_SIZE" \
+        -quality "$THUMB_QUALITY" "$THUMBS_640_DIR/$v_thumb"
+      $MAGICK_CMD "$WEB_DIR/$v_poster" -auto-orient \
+        -thumbnail "${THUMB_360_SIZE}^" -gravity center -extent "$THUMB_360_SIZE" \
+        -quality "$THUMB_QUALITY" "$THUMBS_360_DIR/$v_thumb"
+
+      dur=$(ffprobe -v quiet -print_format json -show_entries format=duration \
+        "$img_filepath" 2>/dev/null | jq -r '.format.duration // empty')
+      dur_str=""
+      if [[ -n "$dur" ]]; then
+        di=${dur%.*}
+        dur_str=$(printf "%d:%02d" "$((di / 60))" "$((di % 60))")
+      fi
+
+      media_json=$(echo "$media_json" | jq --arg w "$v_web" --arg p "$v_poster" --arg t "$v_thumb" --arg d "$dur_str" \
+        '. + [{ type: "video", web: $w, poster: $p, thumbnail: $t, duration: $d }]')
+
+      if [[ -z "$first_web" ]]; then
+        first_web="$v_poster"
+        first_thumb="$v_thumb"
+      fi
+    else
+      i_web="${dirname}-${img_filename%.*}.webp"
+      i_thumb="thumb_${dirname}-${img_filename%.*}.webp"
+
+      $MAGICK_CMD "$img_filepath" -auto-orient \
+        -resize "${WEB_MAX_DIMENSION}x${WEB_MAX_DIMENSION}>" \
+        -quality "$WEB_QUALITY" "$WEB_DIR/$i_web"
+
+      $MAGICK_CMD "$img_filepath" -auto-orient \
+        -thumbnail "${THUMB_SIZE}^" -gravity center -extent "$THUMB_SIZE" \
+        -quality "$THUMB_QUALITY" "$THUMBS_DIR/$i_thumb"
+      $MAGICK_CMD "$img_filepath" -auto-orient \
+        -thumbnail "${THUMB_640_SIZE}^" -gravity center -extent "$THUMB_640_SIZE" \
+        -quality "$THUMB_QUALITY" "$THUMBS_640_DIR/$i_thumb"
+      $MAGICK_CMD "$img_filepath" -auto-orient \
+        -thumbnail "${THUMB_360_SIZE}^" -gravity center -extent "$THUMB_360_SIZE" \
+        -quality "$THUMB_QUALITY" "$THUMBS_360_DIR/$i_thumb"
+
+      media_json=$(echo "$media_json" | jq --arg w "$i_web" --arg t "$i_thumb" \
+        '. + [{ type: "image", web: $w, thumbnail: $t }]')
+
+      if [[ -z "$first_web" ]]; then
+        first_web="$i_web"
+        first_thumb="$i_thumb"
+      fi
+
+      # Extract EXIF from first image for post metadata
+      if [[ $media_count -eq 1 ]]; then
+        exif_json=$(exiftool -json -d "%Y-%m-%dT%H:%M:%S" \
+          -DateTimeOriginal -CreateDate -ModifyDate \
+          -Make -Model -LensModel \
+          -FocalLength -FNumber -ExposureTime -ISO \
+          -GPSLatitude -GPSLongitude \
+          "$img_filepath" 2>/dev/null || echo "[{}]")
+
+        latest_date=$(echo "$exif_json" | jq -r '.[0].DateTimeOriginal // .[0].CreateDate // .[0].ModifyDate // empty')
+        make_v=$(echo "$exif_json" | jq -r '.[0].Make // empty')
+        model_v=$(echo "$exif_json" | jq -r '.[0].Model // empty')
+        post_lens=$(echo "$exif_json" | jq -r '.[0].LensModel // empty')
+        focal_v=$(echo "$exif_json" | jq -r '.[0].FocalLength // empty')
+        aperture_v=$(echo "$exif_json" | jq -r '.[0].FNumber // empty')
+        shutter_v=$(echo "$exif_json" | jq -r '.[0].ExposureTime // empty')
+        iso_v=$(echo "$exif_json" | jq -r '.[0].ISO // empty')
+        post_gps_lat=$(echo "$exif_json" | jq -r '.[0].GPSLatitude // empty')
+        post_gps_lon=$(echo "$exif_json" | jq -r '.[0].GPSLongitude // empty')
+
+        if [[ -n "$make_v" && -n "$model_v" ]]; then
+          if echo "$model_v" | grep -qi "$make_v"; then post_camera="$model_v"
+          else post_camera="$make_v $model_v"; fi
+        elif [[ -n "$model_v" ]]; then post_camera="$model_v"; fi
+
+        sp=()
+        [[ -n "$focal_v" ]] && sp+=("$focal_v")
+        [[ -n "$aperture_v" ]] && sp+=("f/$aperture_v")
+        [[ -n "$shutter_v" ]] && sp+=("${shutter_v}s")
+        [[ -n "$iso_v" ]] && sp+=("ISO $iso_v")
+        [[ ${#sp[@]} -gt 0 ]] && post_settings=$(IFS="  "; echo "${sp[*]}")
+
+        if [[ -n "$post_gps_lat" && -n "$post_gps_lon" ]]; then
+          post_location=$(curl -sf \
+            -H "User-Agent: mygram-photo-site/1.0" \
+            "https://nominatim.openstreetmap.org/reverse?lat=${post_gps_lat}&lon=${post_gps_lon}&format=json&zoom=10" \
+            | jq -r '.display_name // empty' 2>/dev/null || echo "")
+          [[ -n "$post_location" ]] && post_location=$(echo "$post_location" | cut -d',' -f1-2 | sed 's/^ *//;s/ *$//')
+          sleep 1
+        fi
+      fi
+    fi
+  done
+
+  if [[ $media_count -eq 0 ]]; then
+    echo "   ⏭  No supported media files in $dirname/"
+    continue
+  fi
+
+  [[ -z "$latest_date" ]] && latest_date=$(stat -f "%Sm" -t "%Y-%m-%dT%H:%M:%S" "$dirpath" 2>/dev/null || echo "")
+
+  slug=$(echo "$dirname" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
+  photo_caption="$CAPTION"
+
+  new_entry=$(jq -n \
+    --arg fn "$dirname" \
+    --arg wf "$first_web" \
+    --arg th "$first_thumb" \
+    --arg sl "$slug" \
+    --arg dt "$latest_date" \
+    --arg cap "$photo_caption" \
+    --arg cam "$post_camera" \
+    --arg ln "$post_lens" \
+    --arg st "$post_settings" \
+    --arg loc "$post_location" \
+    --arg lat "$post_gps_lat" \
+    --arg lon "$post_gps_lon" \
+    --argjson media "$media_json" \
+    '{
+      filename: $fn,
+      web: $wf,
+      thumbnail: $th,
+      slug: $sl,
+      date: $dt,
+      caption: $cap,
+      camera: $cam,
+      lens: $ln,
+      settings: $st,
+      location: $loc,
+      gps: { lat: $lat, lon: $lon },
+      width: null,
+      height: null,
+      media: $media
+    }')
+
+  tmp=$(mktemp)
+  jq --argjson entry "$new_entry" '.photos = [$entry] + .photos' "$JSON_FILE" > "$tmp"
+  mv "$tmp" "$JSON_FILE"
+
+  new_count=$((new_count + 1))
+  echo "   ✓ Added multi-photo post ($media_count items) to photos.json"
 done
 
 # ---- Sort photos array newest-first by date ----

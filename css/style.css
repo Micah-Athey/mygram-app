@@ -519,6 +519,285 @@ main.container {
   background: #000;
 }
 
+/* ---------- Mobile Post Page ---------- */
+.post-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1060;
+  background: var(--bg-primary);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.post-page.opening {
+  animation: postPageSlideIn 0.25s ease forwards;
+}
+
+.post-page.closing {
+  animation: postPageSlideOut 0.2s ease forwards;
+}
+
+@keyframes postPageSlideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes postPageSlideOut {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
+.post-page-header {
+  display: flex;
+  align-items: center;
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.post-page-back {
+  background: none;
+  border: none;
+  font-size: 1.35rem;
+  padding: 0.25rem;
+  margin-right: 0.75rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.post-page-username {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.post-page-avatar {
+  object-fit: cover;
+}
+
+.post-page-photo-wrap {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  overflow: hidden;
+}
+
+.post-page-photo {
+  width: 100%;
+  display: block;
+}
+
+.post-page-actions {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+}
+
+.post-page-body {
+  padding: 0.625rem 1rem 3rem;
+}
+
+.post-page-body p {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.post-page-body strong {
+  color: var(--text-primary);
+}
+
+.post-page-body .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+.post-page-body .card-meta {
+  color: var(--text-secondary);
+}
+
+.post-page-username-caption {
+  font-size: 0.875rem;
+}
+
+/* Hide post page on desktop — only used on mobile */
+@media (min-width: 768px) {
+  .post-page {
+    display: none !important;
+  }
+}
+
+/* ---------- Grid Badges (carousel / video) ---------- */
+.grid-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ---------- Media Carousel ---------- */
+.media-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-y pinch-zoom;
+}
+
+.carousel-track {
+  display: flex;
+  width: 100%;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
+  flex: 0 0 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.carousel-slide img,
+.carousel-slide video {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Lightbox carousel sizing */
+.lightbox-carousel .carousel-slide img,
+.lightbox-carousel .carousel-slide video {
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+@media (max-width: 767.98px) {
+  .lightbox-carousel .carousel-slide img,
+  .lightbox-carousel .carousel-slide video {
+    max-height: 55vh;
+  }
+}
+
+/* Post page carousel */
+.post-page-carousel .carousel-slide img,
+.post-page-carousel .carousel-slide video {
+  width: 100%;
+  max-width: 100vw;
+  max-height: 75vh;
+  object-fit: contain;
+}
+
+/* Timeline carousel */
+.timeline-carousel {
+  background: #000;
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  gap: 4px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+}
+
+.carousel-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.carousel-dot.active {
+  background: #fff;
+}
+
+/* Carousel arrows */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.carousel-arrow.hidden {
+  display: none;
+}
+.media-carousel:hover .carousel-arrow {
+  opacity: 1;
+}
+/* Always visible on touch devices (no hover) */
+@media (hover: none) {
+  .carousel-arrow {
+    opacity: 0.7;
+  }
+}
+.carousel-arrow-prev {
+  left: 8px;
+}
+.carousel-arrow-next {
+  right: 8px;
+}
+.carousel-arrow:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+.carousel-arrow:active {
+  transform: translateY(-50%) scale(0.92);
+}
+
+/* Lightbox & post page get larger arrows */
+.lightbox-carousel .carousel-arrow,
+.post-page-carousel .carousel-arrow {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+}
+
+/* ---------- Video in Cards ---------- */
+.timeline-card video.card-img,
+.post-page-photo-wrap video {
+  width: 100%;
+  display: block;
+  background: #000;
+}
+
 /* ---------- Lazy-load placeholder ---------- */
 .placeholder-shimmer {
   background: linear-gradient(90deg, var(--shimmer-from) 25%, var(--shimmer-mid) 50%, var(--shimmer-to) 75%);

@@ -149,6 +149,35 @@
     </div>
   </main>
 
+  <!-- ===== MOBILE POST PAGE ===== -->
+  <div class="post-page d-none" id="postPage">
+    <div class="post-page-header">
+      <button class="post-page-back" id="postPageBack" aria-label="Back">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div class="d-flex align-items-center">
+        <img src="assets/profile.jpg" alt="" class="rounded-circle me-2 post-page-avatar" width="24" height="24">
+        <strong class="post-page-username">username</strong>
+      </div>
+    </div>
+    <div class="post-page-photo-wrap">
+      <img id="postPagePhoto" src="" alt="" class="post-page-photo">
+    </div>
+    <div class="post-page-actions">
+      <button class="btn-timeline-share" id="postPageShare" aria-label="Share">
+        <i class="bi bi-send"></i>
+      </button>
+    </div>
+    <div class="post-page-body">
+      <p class="mb-1" id="postPageCaptionWrap"><strong class="post-page-username-caption">username</strong> <span id="postPageCaption"></span></p>
+      <p class="card-meta mb-0" id="postPageDate"></p>
+      <div id="postPageMeta" class="mt-2 small text-muted"></div>
+      <a id="postPageViewPal" class="btn btn-outline-primary btn-sm mt-3 w-100 d-none" href="#" target="_blank" rel="noopener">
+        <i class="bi bi-box-arrow-up-right me-1"></i>View on pal's app
+      </a>
+    </div>
+  </div>
+
   <!-- ===== LIGHTBOX MODAL ===== -->
   <div class="modal fade" id="lightboxModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -198,12 +227,13 @@
 
   <!-- ===== FOOTER ===== -->
   <footer class="site-footer">
-    Powered by <a href="https://github.com/kevdoy/mygram-app" target="_blank" rel="noopener"><strong>mygram</strong></a> v0.8a
+    Powered by <a href="https://github.com/kevdoy/mygram-app" target="_blank" rel="noopener"><strong>mygram</strong></a> v0.9
   </footer>
 
   <!-- ===== SCRIPTS ===== -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/lazyload.js"></script>
+  <script src="js/carousel.js"></script>
   <script src="js/grid.js"></script>
   <script src="js/timeline.js"></script>
   <script src="js/lightbox.js"></script>

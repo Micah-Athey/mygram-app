@@ -8,6 +8,24 @@
   },
   "photos": [
     {
+      "filename": "IMG_4808.jpg",
+      "web": "IMG_4808.webp",
+      "thumbnail": "thumb_IMG_4808.webp",
+      "slug": "img-4808",
+      "date": "2026-02-10T14:19:26",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "55.0 mm f/8.0 1/30s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
       "filename": "IMG_4718.jpg",
       "web": "IMG_4718.webp",
       "thumbnail": "thumb_IMG_4718.webp",

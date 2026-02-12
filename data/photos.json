@@ -8,6 +8,78 @@
   },
   "photos": [
     {
+      "filename": "IMG_4947.jpg",
+      "web": "IMG_4947.webp",
+      "thumbnail": "thumb_IMG_4947.webp",
+      "slug": "img-4947",
+      "date": "2026-02-11T17:22:23",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "34.0 mm f/8.0 1/2000s ISO 1600",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
+      "filename": "IMG_4936.jpg",
+      "web": "IMG_4936.webp",
+      "thumbnail": "thumb_IMG_4936.webp",
+      "slug": "img-4936",
+      "date": "2026-02-11T17:15:40",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "18.0 mm f/8.0 1/400s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
+      "filename": "IMG_4929.jpg",
+      "web": "IMG_4929.webp",
+      "thumbnail": "thumb_IMG_4929.webp",
+      "slug": "img-4929",
+      "date": "2026-02-11T17:09:59",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "47.0 mm f/8.0 1/60s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
+      "filename": "IMG_4902.jpg",
+      "web": "IMG_4902.webp",
+      "thumbnail": "thumb_IMG_4902.webp",
+      "slug": "img-4902",
+      "date": "2026-02-11T17:00:42",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "28.0 mm f/8.0 1/200s ISO 100",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3888,
+      "height": 2592
+    },
+    {
       "filename": "IMG_4808.jpg",
       "web": "IMG_4808.webp",
       "thumbnail": "thumb_IMG_4808.webp",

@@ -204,3 +204,7 @@ The site is fully static. Deploy anywhere:
 ## License
 
 MIT
+
+## Glyph in Icon
+
+Icon by Chondon Backla from Noun Project (CC BY 3.0)

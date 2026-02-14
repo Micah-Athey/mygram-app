@@ -104,6 +104,7 @@
   // ---- Sticky username bar on mobile ----
   const stickyBar = document.getElementById("stickyUsername");
   const stickyPic = stickyBar?.querySelector(".sticky-username-pic");
+  const stickyIcon = stickyBar?.querySelector(".sticky-username-icon");
   const stickyText = stickyBar?.querySelector(".sticky-username-text");
   if (profileHeader && stickyBar) {
     const observer = new IntersectionObserver(
@@ -120,9 +121,11 @@
     if (!stickyBar) return;
     if (view === "palgram") {
       if (stickyPic) stickyPic.style.display = "none";
+      if (stickyIcon) stickyIcon.style.display = "";
       if (stickyText) stickyText.textContent = "palgram";
     } else {
       if (stickyPic) stickyPic.style.display = "";
+      if (stickyIcon) stickyIcon.style.display = "none";
       if (stickyText) stickyText.textContent = profile?.username || "username";
     }
   }

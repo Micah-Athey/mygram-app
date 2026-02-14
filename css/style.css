@@ -447,35 +447,44 @@ body {
   }
 }
 
-/* ---------- Sticky Mobile Username Bar ---------- */
+/* ---------- Sticky Mobile Username Bubble ---------- */
 .sticky-username-bar {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1040;
-  padding: 10px 16px;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 1050;
+  padding: 6px 14px 6px 6px;
+  /* Liquid glass */
   background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 1) 0%,
-    rgba(0, 0, 0, 1) 60%,
-    transparent 100%
+    135deg,
+    rgba(255, 255, 255, 0.50) 0%,
+    rgba(255, 255, 255, 0.25) 40%,
+    rgba(200, 200, 200, 0.30) 60%,
+    rgba(255, 255, 255, 0.35) 100%
   );
+  -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  box-shadow:
+    0 2px 16px rgba(0, 0, 0, 0.10),
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 50px;
   /* Layout */
-  justify-content: center;
   align-items: center;
   gap: 8px;
   /* Transition */
   opacity: 0;
-  transform: translateY(-8px);
   transition: opacity 0.25s ease, transform 0.25s ease;
   pointer-events: none;
 }
 
 .sticky-username-bar.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(-50%) translateY(0);
   pointer-events: auto;
   cursor: pointer;
 }
@@ -484,20 +493,55 @@ body {
   .sticky-username-bar { display: flex; }
 }
 
+@media (prefers-color-scheme: dark) {
+  .sticky-username-bar {
+    background: linear-gradient(
+      135deg,
+      rgba(180, 180, 180, 0.22) 0%,
+      rgba(120, 120, 120, 0.15) 40%,
+      rgba(80, 80, 80, 0.20) 60%,
+      rgba(150, 150, 150, 0.18) 100%
+    );
+    -webkit-backdrop-filter: blur(40px) saturate(1.6) brightness(0.95);
+    backdrop-filter: blur(40px) saturate(1.6) brightness(0.95);
+    box-shadow:
+      0 2px 20px rgba(0, 0, 0, 0.30),
+      0 8px 40px rgba(0, 0, 0, 0.20),
+      inset 0 1.5px 1px rgba(255, 255, 255, 0.20),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.20);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
 .sticky-username-pic {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1.5px solid var(--border-color);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
   flex-shrink: 0;
+}
+
+.sticky-username-icon {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sticky-username-pic {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
 }
 
 .sticky-username-text {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #ffffff !important;
+  color: var(--text-primary);
   letter-spacing: -0.3px;
+  white-space: nowrap;
 }
 
 .profile-pic {
@@ -601,6 +645,11 @@ main.container {
   #profile-header {
     margin-bottom: 0 !important;
     padding-bottom: 10px !important;
+  }
+
+  /* Add top spacing to palgram so sticky bubble doesn't cover month labels */
+  #palgram-view {
+    padding-top: 52px;
   }
 }
 

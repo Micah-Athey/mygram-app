@@ -8,6 +8,24 @@
   },
   "photos": [
     {
+      "filename": "IMG_5162.jpg",
+      "web": "IMG_5162.webp",
+      "thumbnail": "thumb_IMG_5162.webp",
+      "slug": "img-5162",
+      "date": "2026-02-14T16:48:33",
+      "caption": "",
+      "camera": "",
+      "lens": "Canon EF-S 18-55mm f/3.5-5.6 IS",
+      "settings": "35.0 mm f/8.0 1/1000s ISO 1600",
+      "location": "",
+      "gps": {
+        "lat": "",
+        "lon": ""
+      },
+      "width": 3207,
+      "height": 2406
+    },
+    {
       "filename": "IMG_4947.jpg",
       "web": "IMG_4947.webp",
       "thumbnail": "thumb_IMG_4947.webp",

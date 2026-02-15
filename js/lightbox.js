@@ -16,6 +16,7 @@ const LightboxModule = (() => {
   let _modal = null;
   let _suppressHashChange = false;
   let _profile = {};
+  let _postPageOpen = false;
 
   function formatDate(dateStr) {
     if (!dateStr) return "";
@@ -64,14 +65,51 @@ const LightboxModule = (() => {
     const isLocal = !photo._palBaseUrl;
 
     // Image source (local vs pal)
-    const imgSrc = isLocal
-      ? WEB_DIR + photo.web
-      : photo._palBaseUrl + "photos/web/" + photo.web;
+    const media = (typeof CarouselFactory !== "undefined") ? CarouselFactory.getMedia(photo) : [{ type: "image", web: photo.web, thumbnail: photo.thumbnail }];
     const photoEl = document.getElementById("lightboxPhoto");
-    photoEl.src = imgSrc;
-    photoEl.alt = photo.caption || "";
-    if (!isLocal) photoEl.setAttribute("crossorigin", "anonymous");
-    else photoEl.removeAttribute("crossorigin");
+    const mediaWrap = photoEl.parentElement;
+
+    // Clean up previous carousel / video
+    const prevCarousel = mediaWrap.querySelector(".media-carousel");
+    if (prevCarousel) prevCarousel.remove();
+    const prevVideo = mediaWrap.querySelector("video");
+    if (prevVideo) { prevVideo.pause(); prevVideo.remove(); }
+
+    const baseUrl = isLocal ? "" : photo._palBaseUrl;
+
+    if (media.length > 1 && typeof CarouselFactory !== "undefined") {
+      // Multi-photo carousel
+      photoEl.classList.add("d-none");
+      const carousel = CarouselFactory.create(media, {
+        baseUrl,
+        alt: photo.caption || "",
+        className: "lightbox-carousel",
+        imgClass: "img-fluid lightbox-photo"
+      });
+      mediaWrap.appendChild(carousel);
+    } else if (media[0] && media[0].type === "video") {
+      // Video post
+      photoEl.classList.add("d-none");
+      const video = document.createElement("video");
+      video.src = (baseUrl ? baseUrl + "photos/web/" : WEB_DIR) + media[0].web;
+      if (media[0].poster) video.poster = (baseUrl ? baseUrl + "photos/web/" : WEB_DIR) + media[0].poster;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      video.className = "img-fluid lightbox-photo";
+      if (!isLocal) video.setAttribute("crossorigin", "anonymous");
+      mediaWrap.appendChild(video);
+    } else {
+      // Single image (existing behavior)
+      photoEl.classList.remove("d-none");
+      const imgSrc = isLocal
+        ? WEB_DIR + photo.web
+        : photo._palBaseUrl + "photos/web/" + photo.web;
+      photoEl.src = imgSrc;
+      photoEl.alt = photo.caption || "";
+      if (!isLocal) photoEl.setAttribute("crossorigin", "anonymous");
+      else photoEl.removeAttribute("crossorigin");
+    }
 
     // Update lightbox header (avatar + username)
     const avatarEl = document.querySelector(".lightbox-info .rounded-circle");
@@ -135,9 +173,171 @@ const LightboxModule = (() => {
       : photo._palBaseUrl + "photos/web/" + photo.web;
   }
 
-  function open(index) {
-    show(index);
-    _modal.show();
+  /** Check if viewport is mobile-sized */
+  function isMobile() {
+    return window.innerWidth < 768;
+  }
+
+  /** Populate the mobile post page with photo data */
+  function showPostPage(index) {
+    if (index < 0 || index >= _photos.length) return;
+    _currentIndex = index;
+    const photo = _photos[index];
+    const isLocal = !photo._palBaseUrl;
+    const media = (typeof CarouselFactory !== "undefined") ? CarouselFactory.getMedia(photo) : [{ type: "image", web: photo.web, thumbnail: photo.thumbnail }];
+
+    const postPage = document.getElementById("postPage");
+    const photoEl = document.getElementById("postPagePhoto");
+    const photoWrap = document.querySelector(".post-page-photo-wrap");
+
+    // Clean up previous carousel / video in post page
+    const prevCarousel = photoWrap.querySelector(".media-carousel");
+    if (prevCarousel) prevCarousel.remove();
+    const prevVideo = photoWrap.querySelector("video");
+    if (prevVideo) { prevVideo.pause(); prevVideo.remove(); }
+
+    const baseUrl = isLocal ? "" : photo._palBaseUrl;
+
+    if (media.length > 1 && typeof CarouselFactory !== "undefined") {
+      photoEl.classList.add("d-none");
+      const carousel = CarouselFactory.create(media, {
+        baseUrl,
+        alt: photo.caption || "",
+        className: "post-page-carousel",
+        imgClass: "post-page-photo"
+      });
+      photoWrap.appendChild(carousel);
+    } else if (media[0] && media[0].type === "video") {
+      photoEl.classList.add("d-none");
+      const video = document.createElement("video");
+      video.src = (baseUrl ? baseUrl + "photos/web/" : WEB_DIR) + media[0].web;
+      if (media[0].poster) video.poster = (baseUrl ? baseUrl + "photos/web/" : WEB_DIR) + media[0].poster;
+      video.controls = true;
+      video.playsInline = true;
+      video.preload = "metadata";
+      video.className = "post-page-photo";
+      if (!isLocal) video.setAttribute("crossorigin", "anonymous");
+      photoWrap.appendChild(video);
+    } else {
+      photoEl.classList.remove("d-none");
+      const imgSrc = isLocal
+        ? WEB_DIR + photo.web
+        : photo._palBaseUrl + "photos/web/" + photo.web;
+      photoEl.src = imgSrc;
+      photoEl.alt = photo.caption || "";
+      if (!isLocal) photoEl.setAttribute("crossorigin", "anonymous");
+      else photoEl.removeAttribute("crossorigin");
+    }
+
+    // Avatar + username in header
+    const avatarEl = postPage.querySelector(".post-page-avatar");
+    if (avatarEl) {
+      avatarEl.src = photo._palAvatar || _profile.profilePhoto || "assets/profile.jpg";
+      if (!isLocal) avatarEl.setAttribute("crossorigin", "anonymous");
+      else avatarEl.removeAttribute("crossorigin");
+    }
+    const headerUsername = postPage.querySelector(".post-page-username");
+    if (headerUsername) {
+      headerUsername.textContent = photo._palUsername || _profile.username || "username";
+    }
+    const captionUsername = postPage.querySelector(".post-page-username-caption");
+    if (captionUsername) {
+      captionUsername.textContent = photo._palUsername || _profile.username || "username";
+    }
+
+    const captionEl = document.getElementById("postPageCaption");
+    const captionWrap = document.getElementById("postPageCaptionWrap");
+    if (photo.caption) {
+      captionEl.textContent = photo.caption;
+      if (captionWrap) captionWrap.classList.remove("d-none");
+    } else {
+      captionEl.textContent = "";
+      if (captionWrap) captionWrap.classList.add("d-none");
+    }
+
+    document.getElementById("postPageDate").textContent = formatDate(photo.date);
+
+    // Metadata
+    const metaParts = [];
+    if (photo.camera) metaParts.push(`<i class="bi bi-camera me-1"></i>${photo.camera}`);
+    if (photo.lens) metaParts.push(`<i class="bi bi-aperture me-1"></i>${photo.lens}`);
+    if (photo.settings) metaParts.push(`<i class="bi bi-sliders me-1"></i>${photo.settings}`);
+    if (photo.location) metaParts.push(`<i class="bi bi-geo-alt me-1"></i>${photo.location}`);
+    document.getElementById("postPageMeta").innerHTML = metaParts.join("<br>");
+
+    // View pal button
+    const viewPalBtn = document.getElementById("postPageViewPal");
+    if (viewPalBtn) {
+      if (!isLocal && photo._palBaseUrl) {
+        viewPalBtn.href = photo._palBaseUrl + "#photo=" + slugFor(photo);
+        viewPalBtn.innerHTML = `<i class="bi bi-box-arrow-up-right me-1"></i>View on ${photo._palUsername}'s app`;
+        viewPalBtn.classList.remove("d-none");
+      } else {
+        viewPalBtn.classList.add("d-none");
+      }
+    }
+
+    // Update hash with replaceState (don't push new history entry)
+    if (isLocal) {
+      setHash(slugFor(photo));
+    } else {
+      clearHash();
+    }
+
+    // Preload adjacent
+    preload(index - 1);
+    preload(index + 1);
+  }
+
+  /** Open mobile post page with slide-in animation */
+  function openPostPage(index, { fromHash = false } = {}) {
+    const postPage = document.getElementById("postPage");
+    postPage.classList.remove("d-none", "closing", "opening");
+    void postPage.offsetWidth; // force reflow for animation restart
+    postPage.classList.add("opening");
+    postPage.addEventListener("animationend", function handler() {
+      postPage.removeEventListener("animationend", handler);
+      postPage.classList.remove("opening");
+    });
+
+    showPostPage(index);
+    _postPageOpen = true;
+    document.body.style.overflow = "hidden";
+
+    const photo = _photos[index];
+    const slug = slugFor(photo);
+    if (fromHash) {
+      // Deep-linked: set a clean base state, then push hash
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+      history.pushState({ postPage: true }, "", "#photo=" + slug);
+    } else {
+      history.pushState({ postPage: true }, "", "#photo=" + slug);
+    }
+  }
+
+  /** Close mobile post page with slide-out animation */
+  function closePostPage() {
+    _postPageOpen = false;
+    document.body.style.overflow = "";
+    const postPage = document.getElementById("postPage");
+    // Pause any playing videos
+    postPage.querySelectorAll("video").forEach(v => v.pause());
+    postPage.classList.remove("opening");
+    postPage.classList.add("closing");
+    postPage.addEventListener("animationend", function handler() {
+      postPage.removeEventListener("animationend", handler);
+      postPage.classList.add("d-none");
+      postPage.classList.remove("closing");
+    });
+  }
+
+  function open(index, opts = {}) {
+    if (isMobile()) {
+      openPostPage(index, opts);
+    } else {
+      show(index);
+      _modal.show();
+    }
   }
 
   /** Copy current photo URL to clipboard and show toast */
@@ -178,7 +378,7 @@ const LightboxModule = (() => {
     if (!hash.startsWith("#photo=")) return;
     const slug = hash.replace("#photo=", "");
     const idx = indexBySlug(slug);
-    if (idx !== -1) open(idx);
+    if (idx !== -1) open(idx, { fromHash: true });
   }
 
   function setPhotos(photos) {
@@ -219,6 +419,8 @@ const LightboxModule = (() => {
     const photoContainer = modalEl.querySelector(".lightbox-photo-container");
     if (photoContainer) {
       photoContainer.addEventListener("touchstart", (e) => {
+        // Skip if interacting with a carousel or video element
+        if (e.target.closest('.media-carousel') || e.target.tagName === 'VIDEO') return;
         _touchStartX = e.changedTouches[0].screenX;
         _touchStartY = e.changedTouches[0].screenY;
         _touchDeltaX = 0;
@@ -340,6 +542,11 @@ const LightboxModule = (() => {
     // Exit immersive when lightbox closes
     modalEl.addEventListener("hidden.bs.modal", () => {
       exitImmersive();
+      // Clean up any playing videos in the lightbox
+      const mediaWrap = modalEl.querySelector(".lightbox-photo-container");
+      if (mediaWrap) {
+        mediaWrap.querySelectorAll("video").forEach(v => v.pause());
+      }
     });
 
     // Swipe-down to close in immersive mode
@@ -462,14 +669,111 @@ const LightboxModule = (() => {
         const slug = hash.replace("#photo=", "");
         const idx = indexBySlug(slug);
         if (idx !== -1) {
-          if (modalEl.classList.contains("show")) {
+          if (_postPageOpen) {
+            showPostPage(idx);
+          } else if (modalEl.classList.contains("show")) {
             show(idx);
           } else {
             open(idx);
           }
         }
-      } else if (modalEl.classList.contains("show")) {
-        _modal.hide();
+      } else {
+        if (_postPageOpen) {
+          closePostPage();
+        } else if (modalEl.classList.contains("show")) {
+          _modal.hide();
+        }
+      }
+    });
+
+    // ---- Mobile Post Page event listeners ----
+    const postPageBackBtn = document.getElementById("postPageBack");
+    if (postPageBackBtn) {
+      postPageBackBtn.addEventListener("click", () => history.back());
+    }
+
+    const postPageShareBtn = document.getElementById("postPageShare");
+    if (postPageShareBtn) {
+      postPageShareBtn.addEventListener("click", share);
+    }
+
+    // Swipe gestures on mobile post page photo
+    const postPagePhotoWrap = document.querySelector(".post-page-photo-wrap");
+    if (postPagePhotoWrap) {
+      let ppTouchStartX = 0;
+      let ppTouchStartY = 0;
+      let ppTouchDeltaX = 0;
+      let ppSwiping = false;
+
+      postPagePhotoWrap.addEventListener("touchstart", (e) => {
+        // Skip if interacting with a carousel or video element
+        if (e.target.closest('.media-carousel') || e.target.tagName === 'VIDEO') return;
+        ppTouchStartX = e.changedTouches[0].screenX;
+        ppTouchStartY = e.changedTouches[0].screenY;
+        ppTouchDeltaX = 0;
+        ppSwiping = false;
+      }, { passive: true });
+
+      postPagePhotoWrap.addEventListener("touchmove", (e) => {
+        const dx = e.changedTouches[0].screenX - ppTouchStartX;
+        const dy = e.changedTouches[0].screenY - ppTouchStartY;
+        if (!ppSwiping && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+          ppSwiping = true;
+        }
+        if (ppSwiping) {
+          ppTouchDeltaX = dx;
+          const ppPhotoEl = document.getElementById("postPagePhoto");
+          ppPhotoEl.style.transition = "none";
+          ppPhotoEl.style.transform = `translateX(${dx}px)`;
+          ppPhotoEl.style.opacity = Math.max(0.4, 1 - Math.abs(dx) / 500);
+        }
+      }, { passive: true });
+
+      postPagePhotoWrap.addEventListener("touchend", () => {
+        if (!ppSwiping) return;
+        const ppPhotoEl = document.getElementById("postPagePhoto");
+        if (Math.abs(ppTouchDeltaX) > SWIPE_THRESHOLD) {
+          const goNext = ppTouchDeltaX < 0;
+          const nextIdx = goNext ? _currentIndex + 1 : _currentIndex - 1;
+          if (nextIdx < 0 || nextIdx >= _photos.length) {
+            ppPhotoEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+            ppPhotoEl.style.transform = "";
+            ppPhotoEl.style.opacity = "";
+            setTimeout(() => { ppPhotoEl.style.transition = ""; }, 200);
+          } else {
+            const exitX = goNext ? "-100vw" : "100vw";
+            ppPhotoEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+            ppPhotoEl.style.transform = `translateX(${exitX})`;
+            ppPhotoEl.style.opacity = "0";
+            setTimeout(() => {
+              ppPhotoEl.style.transition = "none";
+              ppPhotoEl.style.transform = `translateX(${goNext ? "100vw" : "-100vw"})`;
+              ppPhotoEl.style.opacity = "0";
+              showPostPage(nextIdx);
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  ppPhotoEl.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+                  ppPhotoEl.style.transform = "";
+                  ppPhotoEl.style.opacity = "";
+                  setTimeout(() => { ppPhotoEl.style.transition = ""; }, 250);
+                });
+              });
+            }, 200);
+          }
+        } else {
+          ppPhotoEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+          ppPhotoEl.style.transform = "";
+          ppPhotoEl.style.opacity = "";
+          setTimeout(() => { ppPhotoEl.style.transition = ""; }, 200);
+        }
+        ppSwiping = false;
+      }, { passive: true });
+    }
+
+    // ---- History back (popstate) for mobile post page ----
+    window.addEventListener("popstate", () => {
+      if (_postPageOpen) {
+        closePostPage();
       }
     });
 

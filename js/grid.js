@@ -39,6 +39,23 @@ const GridModule = (() => {
 
     col.appendChild(img);
     col.appendChild(overlay);
+
+    // Media badges (carousel / video)
+    if (typeof CarouselFactory !== "undefined") {
+      const media = CarouselFactory.getMedia(photo);
+      if (media.length > 1) {
+        const badge = document.createElement("div");
+        badge.className = "grid-badge";
+        badge.innerHTML = '<i class="bi bi-copy"></i>';
+        col.appendChild(badge);
+      } else if (CarouselFactory.isVideo(photo)) {
+        const badge = document.createElement("div");
+        badge.className = "grid-badge";
+        badge.innerHTML = '<i class="bi bi-play-fill"></i>';
+        col.appendChild(badge);
+      }
+    }
+
     return col;
   }
 

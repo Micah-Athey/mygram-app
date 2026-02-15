@@ -56,6 +56,21 @@ const TimelineModule = (() => {
     });
   }
 
+  function mediaHtmlFor(photo, index) {
+    if (typeof CarouselFactory !== "undefined") {
+      const media = CarouselFactory.getMedia(photo);
+      if (media.length > 1) {
+        return `<div class="timeline-carousel-placeholder" data-index="${index}"></div>`;
+      }
+      if (media[0] && media[0].type === "video") {
+        const src = WEB_DIR + media[0].web;
+        const poster = media[0].poster ? ` poster="${WEB_DIR}${media[0].poster}"` : "";
+        return `<video class="card-img" controls playsinline preload="metadata" src="${src}"${poster}></video>`;
+      }
+    }
+    return `<img class="card-img lazy" data-src="${WEB_DIR}${photo.web}" alt="${photo.caption || ""}">`;
+  }
+
   function createCard(photo, index) {
     const card = document.createElement("div");
     card.className = "timeline-card";
@@ -68,11 +83,7 @@ const TimelineModule = (() => {
           ${photo.location ? `<small class="text-muted">${photo.location}</small>` : ""}
         </div>
       </div>
-      <img
-        class="card-img lazy"
-        data-src="${WEB_DIR}${photo.web}"
-        alt="${photo.caption || ""}"
-      >
+      ${mediaHtmlFor(photo, index)}
       <div class="card-actions">
         <button class="btn-timeline-share" data-index="${index}" aria-label="Share">
           <i class="bi bi-send"></i>
@@ -121,6 +132,18 @@ const TimelineModule = (() => {
       fragment.appendChild(createCard(photo, i));
     });
     timeline.appendChild(fragment);
+
+    // Replace carousel placeholders with actual carousel elements
+    if (typeof CarouselFactory !== "undefined") {
+      timeline.querySelectorAll(".timeline-carousel-placeholder").forEach((placeholder) => {
+        const idx = parseInt(placeholder.dataset.index, 10);
+        const photo = _photos[idx];
+        if (!photo) return;
+        const media = CarouselFactory.getMedia(photo);
+        const carousel = CarouselFactory.create(media, { alt: photo.caption || "", lazy: true, className: "timeline-carousel" });
+        placeholder.replaceWith(carousel);
+      });
+    }
 
     // Share button click delegation
     timeline.addEventListener("click", (e) => {

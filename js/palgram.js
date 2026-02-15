@@ -99,16 +99,34 @@ const PalgramModule = (() => {
     }
   }
 
+  function mediaHtmlForPal(photo, index) {
+    if (typeof CarouselFactory !== "undefined") {
+      const media = CarouselFactory.getMedia(photo);
+      const isLocal = !photo._palBaseUrl;
+      const webDir = isLocal ? "photos/web/" : photo._palBaseUrl + "photos/web/";
+      const crossOrigin = !isLocal ? ' crossorigin="anonymous"' : '';
+      if (media.length > 1) {
+        return `<div class="palgram-carousel-placeholder" data-index="${index}"></div>`;
+      }
+      if (media[0] && media[0].type === "video") {
+        const src = webDir + media[0].web;
+        const poster = media[0].poster ? ` poster="${webDir}${media[0].poster}"` : "";
+        return `<video class="card-img palgram-photo" data-index="${index}" controls playsinline preload="metadata" src="${src}"${poster}${crossOrigin} style="cursor:pointer"></video>`;
+      }
+    }
+    const isLocal = !photo._palBaseUrl;
+    const imgSrc = isLocal ? "photos/web/" + photo.web : photo._palBaseUrl + "photos/web/" + photo.web;
+    const crossOrigin = !isLocal ? ' crossorigin="anonymous"' : '';
+    return `<img class="card-img lazy palgram-photo" data-src="${imgSrc}" data-index="${index}" alt="${photo.caption || ""}"${crossOrigin} style="cursor:pointer">`;
+  }
+
   /** Create a timeline card for a merged photo entry */
   function createCard(photo, index) {
     const card = document.createElement("div");
     card.className = "timeline-card";
 
-    // Determine image URL and avatar
+    // Determine avatar and username
     const isLocal = !photo._palBaseUrl;
-    const imgSrc = isLocal
-      ? "photos/web/" + photo.web
-      : photo._palBaseUrl + "photos/web/" + photo.web;
     const avatar = isLocal
       ? (photo._palAvatar || "assets/profile.jpg")
       : photo._palAvatar;
@@ -127,14 +145,7 @@ const PalgramModule = (() => {
           ${photo.location ? `<small class="text-muted">${photo.location}</small>` : ""}
         </div>
       </div>
-      <img
-        class="card-img lazy palgram-photo"
-        data-src="${imgSrc}"
-        data-index="${index}"
-        alt="${photo.caption || ""}"
-        ${!isLocal ? 'crossorigin="anonymous"' : ""}
-        style="cursor:pointer"
-      >
+      ${mediaHtmlForPal(photo, index)}
       <div class="card-actions">
         <button class="btn-timeline-share" data-index="${index}" aria-label="Share">
           <i class="bi bi-send"></i>
@@ -180,6 +191,28 @@ const PalgramModule = (() => {
     });
 
     container.appendChild(fragment);
+
+    // Replace carousel placeholders with actual carousel elements
+    if (typeof CarouselFactory !== "undefined") {
+      container.querySelectorAll(".palgram-carousel-placeholder").forEach((placeholder) => {
+        const idx = parseInt(placeholder.dataset.index, 10);
+        const photo = _allPhotos[idx];
+        if (!photo) return;
+        const media = CarouselFactory.getMedia(photo);
+        const isLocal = !photo._palBaseUrl;
+        const baseUrl = isLocal ? "" : photo._palBaseUrl;
+        const carousel = CarouselFactory.create(media, {
+          baseUrl,
+          alt: photo.caption || "",
+          lazy: true,
+          className: "timeline-carousel"
+        });
+        carousel.dataset.index = idx;
+        carousel.classList.add("palgram-photo");
+        carousel.style.cursor = "pointer";
+        placeholder.replaceWith(carousel);
+      });
+    }
 
     // Click delegation: photo tap → lightbox, share button
     container.addEventListener("click", (e) => {

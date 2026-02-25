@@ -101,7 +101,12 @@
   const mygramContent = document.getElementById("mygram-content");
   const palgramView = document.getElementById("palgram-view");
 
-  // ---- Mobile Profile Bubble ----
+  // ---- Desktop: move bubble elements into header bar ----
+  const desktopHeader = document.getElementById("desktopHeader");
+  const desktopProfileWrap = document.getElementById("desktopProfileWrap");
+  const desktopNavsWrap = document.getElementById("desktopNavsWrap");
+
+  // ---- Profile Bubble ----
   const profileBubble = document.getElementById("profileBubble");
   const profileZone = document.getElementById("profileZone");
   const bubblePic = profileBubble?.querySelector(".profile-bubble-pic");
@@ -134,7 +139,10 @@
       // Don't toggle if they tapped a link inside expanded
       if (e.target.closest(".profile-bubble-link")) return;
       profileBubble.classList.toggle("expanded");
-      bubbleOverlay.classList.toggle("active", profileBubble.classList.contains("expanded"));
+      // Only show overlay on mobile
+      if (isMobile) {
+        bubbleOverlay.classList.toggle("active", profileBubble.classList.contains("expanded"));
+      }
     });
 
     bubbleOverlay.addEventListener("click", () => {
@@ -200,10 +208,15 @@
   function updateBubble(view) {
     if (!profileBubble) return;
     currentView = view;
-    profileBubble.classList.remove("expanded");
-    bubbleOverlay.classList.remove("active");
+    // Only collapse on mobile; desktop stays expanded
+    if (isMobile) {
+      profileBubble.classList.remove("expanded");
+      bubbleOverlay.classList.remove("active");
+    }
     if (view === "palgram") {
       profileBubble.classList.add("palgram-mode");
+      // Show collapsed pill with "palgram" title on both mobile and desktop
+      profileBubble.classList.remove("expanded");
       if (bubblePic) bubblePic.style.display = "none";
       if (bubbleIcon) bubbleIcon.style.display = "";
       if (bubbleName) bubbleName.textContent = "palgram";
@@ -214,6 +227,10 @@
       if (bubblePic) bubblePic.style.display = "";
       if (bubbleIcon) bubbleIcon.style.display = "none";
       if (bubbleName) bubbleName.textContent = profile?.username || "username";
+      // On desktop, expand if at top of page
+      if (!isMobile && window.scrollY <= 10) {
+        profileBubble.classList.add("expanded");
+      }
       updateProfileZone();
     }
     updateContentPadding();
@@ -271,7 +288,7 @@
   // Set initial padding state
   updateContentPadding();
 
-  // ---- Mobile Bubble Nav ----
+  // ---- Bubble Nav (mygram/palgram toggle) ----
   const bubbleNav = document.getElementById("bubbleNav");
   const bubbleGallery = document.getElementById("bubbleGallery");
   const bubblePalgram = document.getElementById("bubblePalgram");
@@ -353,5 +370,187 @@
         bubbleViewNav.style.display = "";
       }
     };
+  }
+
+  // ---- Desktop: reparent bubbles into the header bar, always expanded ----
+  if (!isMobile && desktopHeader) {
+    // Move profile bubble into desktop header
+    if (profileBubble && desktopProfileWrap) {
+      desktopProfileWrap.appendChild(profileBubble);
+      profileBubble.classList.add("expanded");
+    }
+
+    // Move both nav bubbles into the grouped navs wrapper
+    if (bubbleViewNav && desktopNavsWrap) {
+      desktopNavsWrap.appendChild(bubbleViewNav);
+      bubbleViewNav.classList.add("expanded");
+      bubbleViewNav.style.display = "";
+    }
+
+    if (bubbleNav && desktopNavsWrap) {
+      desktopNavsWrap.appendChild(bubbleNav);
+      bubbleNav.classList.add("expanded");
+    }
+
+    // ---- Sync body padding with fixed header height ----
+    function syncHeaderPadding() {
+      const h = desktopHeader.offsetHeight;
+      document.body.style.paddingTop = h + "px";
+    }
+    // Initial sync (after a frame so the DOM has settled)
+    requestAnimationFrame(syncHeaderPadding);
+
+    // Re-sync when profile bubble transitions finish (expand/collapse changes height)
+    if (profileBubble) {
+      profileBubble.addEventListener("transitionend", syncHeaderPadding);
+    }
+
+    // On desktop, view bubble clicks switch tabs directly (no expand/collapse cycle)
+    if (bubbleViewNav) {
+      const viewBtnsDesktop = bubbleViewNav.querySelectorAll(".bubble-btn-view");
+      viewBtnsDesktop.forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopImmediatePropagation();
+          const tabId = btn.dataset.viewTab;
+          const tabEl = document.getElementById(tabId);
+          if (tabEl) {
+            const bsTab = new bootstrap.Tab(tabEl);
+            bsTab.show();
+          }
+          viewBtnsDesktop.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          // Keep it expanded on desktop
+          bubbleViewNav.classList.add("expanded");
+        }, true); // capture phase to run before the mobile handler
+      });
+    }
+
+    // On desktop, mygram/palgram clicks switch directly (no expand/collapse cycle)
+    if (bubbleNav && bubbleGallery && bubblePalgram) {
+      function desktopNavClick(targetView, targetBtn, otherBtn) {
+        return (e) => {
+          e.stopImmediatePropagation();
+          switchView(targetView);
+          targetBtn.classList.add("active");
+          otherBtn.classList.remove("active");
+          // Keep expanded on desktop
+          bubbleNav.classList.add("expanded");
+          // Re-show view nav if switching back to mygram
+          if (bubbleViewNav) {
+            bubbleViewNav.style.display = targetView === "palgram" ? "none" : "";
+          }
+          // Re-sync padding after view switch
+          requestAnimationFrame(syncHeaderPadding);
+        };
+      }
+
+      bubbleGallery.addEventListener("click", desktopNavClick("mygram", bubbleGallery, bubblePalgram), true);
+      bubblePalgram.addEventListener("click", desktopNavClick("palgram", bubblePalgram, bubbleGallery), true);
+    }
+
+    // ---- Desktop scroll: collapse profile on scroll, re-expand at top ----
+    let desktopScrollTicking = false;
+    let desktopProfileCollapsed = false;
+
+    window.addEventListener("scroll", () => {
+      if (desktopScrollTicking) return;
+      desktopScrollTicking = true;
+      requestAnimationFrame(() => {
+        desktopScrollTicking = false;
+        if (!profileBubble) return;
+        // Only manage profile collapse in mygram view
+        if (currentView !== "mygram") return;
+
+        if (window.scrollY > 10 && !desktopProfileCollapsed) {
+          profileBubble.classList.remove("expanded");
+          desktopProfileCollapsed = true;
+          requestAnimationFrame(syncHeaderPadding);
+        } else if (window.scrollY <= 10 && desktopProfileCollapsed) {
+          profileBubble.classList.add("expanded");
+          desktopProfileCollapsed = false;
+          requestAnimationFrame(syncHeaderPadding);
+        }
+      });
+    }, { passive: true });
+  }
+
+  // ---- Secret Palgram settings: 10-tap easter egg ----
+  (function initSecretSettings() {
+    const STORAGE_KEY = 'mygram_default_view';
+    let tapCount = 0;
+    let tapTimer = null;
+    const TAP_RESET_MS = 2000; // reset counter after 2s of inactivity
+
+    const overlay = document.getElementById('secretModalOverlay');
+    const setBtn = document.getElementById('secretSetDefault');
+    const resetBtn = document.getElementById('secretResetDefault');
+    const closeBtn = document.getElementById('secretClose');
+    const statusEl = document.getElementById('secretStatus');
+
+    if (!overlay || !profileBubble) return;
+
+    // Listen for taps on the palgram bubble title
+    profileBubble.addEventListener('click', () => {
+      // Only count taps when showing palgram title
+      if (currentView !== 'palgram') return;
+      tapCount++;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(() => { tapCount = 0; }, TAP_RESET_MS);
+      if (tapCount >= 10) {
+        tapCount = 0;
+        clearTimeout(tapTimer);
+        openSecretModal();
+      }
+    });
+
+    function openSecretModal() {
+      const hasDefault = localStorage.getItem(STORAGE_KEY) === 'palgram';
+      // Update button visibility
+      setBtn.classList.toggle('d-none', hasDefault);
+      resetBtn.classList.toggle('d-none', !hasDefault);
+      statusEl.classList.add('d-none');
+      overlay.classList.remove('d-none');
+    }
+
+    function closeModal() {
+      overlay.classList.add('d-none');
+    }
+
+    function showStatus(msg) {
+      statusEl.textContent = msg;
+      statusEl.classList.remove('d-none');
+    }
+
+    setBtn.addEventListener('click', () => {
+      localStorage.setItem(STORAGE_KEY, 'palgram');
+      showStatus('\u2713 Palgram is now the default view');
+      setBtn.classList.add('d-none');
+      resetBtn.classList.remove('d-none');
+    });
+
+    resetBtn.addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_KEY);
+      showStatus('\u2713 Default view reset to mygram');
+      resetBtn.classList.add('d-none');
+      setBtn.classList.remove('d-none');
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+  })();
+
+  // ---- Auto-switch to palgram if ?view=palgram or localStorage default ----
+  // Placed at the end so all switchView wrapping and DOM reparenting is complete.
+  const urlParams = new URLSearchParams(window.location.search);
+  const savedDefault = localStorage.getItem('mygram_default_view');
+  if (urlParams.get('view') === 'palgram' || savedDefault === 'palgram') {
+    switchView('palgram');
+    // Sync bubble nav active states
+    const bubbleGal = document.getElementById('bubbleGallery');
+    const bubblePal = document.getElementById('bubblePalgram');
+    if (bubbleGal) bubbleGal.classList.remove('active');
+    if (bubblePal) bubblePal.classList.add('active');
   }
 })();

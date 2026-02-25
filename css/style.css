@@ -17,7 +17,7 @@
   --shimmer-mid: #e0e0e0;
   --shimmer-to: #f0f0f0;
   --nav-bg: #ffffff;
-  --lightbox-info-bg: #ffffff;
+  --lightbox-info-bg: rgba(255, 255, 255, 0.80);
   --btn-hover-bg: #f5f5f5;
   --toast-bg: #262626;
   --toast-text: #ffffff;
@@ -39,7 +39,7 @@
     --shimmer-mid: #2a2a2a;
     --shimmer-to: #1a1a1a;
     --nav-bg: #000000;
-    --lightbox-info-bg: #1a1a1a;
+    --lightbox-info-bg: rgba(26, 26, 26, 0.80);
     --btn-hover-bg: #2a2a2a;
     --toast-bg: #f5f5f5;
     --toast-text: #262626;
@@ -61,18 +61,13 @@ body {
 }
 
 /* ---------- Navbar ---------- */
-@media (max-width: 767.98px) {
-  .navbar { display: none !important; }
-}
+/* Hide the old navbar on all screen sizes – replaced by bubble UI */
+.navbar { display: none !important; }
 
-.navbar {
-  background-color: var(--nav-bg) !important;
-  border-bottom-color: var(--border-color) !important;
-}
 
-/* ---------- Mobile Bubble Nav ---------- */
+/* ---------- Bubble Nav ---------- */
 .bubble-nav {
-  display: none; /* shown only on mobile */
+  display: none; /* shown via media queries below */
   position: fixed;
   bottom: 28px;
   left: 24px;
@@ -188,8 +183,46 @@ body {
   }
 }
 
+/* Show bubble nav on mobile */
 @media (max-width: 767.98px) {
   .bubble-nav { display: flex; }
+}
+
+/* Desktop: show nav, static position, always show all buttons */
+@media (min-width: 768px) {
+  .bubble-nav {
+    display: flex;
+    position: static;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    z-index: auto;
+    padding: 6px;
+  }
+
+  .bubble-nav .bubble-btn {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  .bubble-nav .bubble-btn + .bubble-btn {
+    margin-left: 2px;
+  }
+
+  .bubble-nav .bubble-btn.active {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+  }
+}
+
+@media (min-width: 768px) and (prefers-color-scheme: dark) {
+  .bubble-nav .bubble-btn.active {
+    background: rgba(200, 200, 200, 0.2);
+  }
 }
 
 .bubble-btn {
@@ -221,38 +254,42 @@ body {
   color: var(--text-primary);
 }
 
-/* Collapsed state: hide whichever button is NOT active */
-.bubble-nav:not(.expanded) .bubble-btn:not(.active) {
-  width: 0;
-  overflow: hidden;
-  opacity: 0;
-  margin: 0;
-  padding: 0;
+/* Collapsed state: hide whichever button is NOT active (mobile only) */
+@media (max-width: 767.98px) {
+  .bubble-nav:not(.expanded) .bubble-btn:not(.active) {
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+  }
 }
 
-/* Expanded state: show all buttons, enlarge for touch */
-.bubble-nav.expanded {
-  padding: 6px 8px;
+/* Expanded state: show all buttons, enlarge for touch (mobile) */
+@media (max-width: 767.98px) {
+  .bubble-nav.expanded {
+    padding: 6px 8px;
+  }
+
+  .bubble-nav.expanded .bubble-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 1.35rem;
+    opacity: 1;
+  }
+
+  .bubble-nav.expanded .bubble-btn + .bubble-btn {
+    margin-left: 4px;
+  }
+
+  /* Highlight pill behind active icon when expanded */
+  .bubble-nav.expanded .bubble-btn.active {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+  }
 }
 
-.bubble-nav.expanded .bubble-btn {
-  width: 52px;
-  height: 52px;
-  font-size: 1.35rem;
-  opacity: 1;
-}
-
-.bubble-nav.expanded .bubble-btn + .bubble-btn {
-  margin-left: 4px;
-}
-
-/* Highlight pill behind active icon when expanded */
-.bubble-nav.expanded .bubble-btn.active {
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-}
-
-@media (prefers-color-scheme: dark) {
+@media (max-width: 767.98px) and (prefers-color-scheme: dark) {
   .bubble-nav.expanded .bubble-btn.active {
     background: rgba(200, 200, 200, 0.2);
   }
@@ -264,10 +301,8 @@ body {
   right: 24px;
 }
 
-/* Hide the existing view tabs bar on mobile */
-@media (max-width: 767.98px) {
-  #viewTabsWrapper { display: none !important; }
-}
+/* Hide old view tabs bar on all sizes – replaced by bubble UI */
+#viewTabsWrapper { display: none !important; }
 
 .navbar-brand {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -319,6 +354,48 @@ body {
 .nav-admin-link:hover {
   opacity: 0.6;
   color: var(--text-secondary);
+}
+
+/* ---------- Desktop Header Bar ---------- */
+.desktop-header {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .desktop-header {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1040;
+    padding: 12px 24px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .desktop-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* Full width — no max-width constraint */
+  }
+
+  .desktop-header-profile {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .desktop-header-spacer {
+    flex: 1;
+  }
+
+  .desktop-header-navs {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
 /* ---------- Profile Header ---------- */
@@ -447,11 +524,9 @@ body {
   }
 }
 
-/* ---- Hide profile header on mobile ---- */
-@media (max-width: 767.98px) {
-  #profile-header {
-    display: none !important;
-  }
+/* Hide old profile header on all sizes – replaced by bubble UI */
+#profile-header {
+  display: none !important;
 }
 
 /* ---------- Mobile Profile Zone (top header area) ---------- */
@@ -475,14 +550,10 @@ body {
   }
 }
 
-/* ---------- Mobile Profile Bubble ---------- */
+/* ---------- Profile Bubble ---------- */
 .profile-bubble {
-  display: none;
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1050;
+  display: inline-flex;
+  flex-direction: column;
   /* Liquid glass */
   background: linear-gradient(
     135deg,
@@ -504,11 +575,69 @@ body {
   overflow: hidden;
   transition: border-radius 0.35s cubic-bezier(.4,0,.2,1),
               width 0.35s cubic-bezier(.4,0,.2,1),
+              max-height 0.35s cubic-bezier(.4,0,.2,1),
               box-shadow 0.35s ease;
 }
 
+/* Mobile: fixed position at top center */
 @media (max-width: 767.98px) {
-  .profile-bubble { display: inline-flex; flex-direction: column; }
+  .profile-bubble {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+  }
+}
+
+/* Desktop: static, in-flow within header bar */
+@media (min-width: 768px) {
+  .profile-bubble {
+    position: static;
+    transform: none;
+    z-index: auto;
+    width: auto;
+    max-width: none;
+    cursor: pointer;
+    transition: border-radius 0.3s cubic-bezier(.4,0,.2,1),
+                box-shadow 0.3s ease;
+  }
+
+  /* Desktop expanded: show full profile info, hide collapsed pill */
+  .profile-bubble.expanded {
+    border-radius: 20px;
+  }
+
+  .profile-bubble.expanded .profile-bubble-collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .profile-bubble.expanded .profile-bubble-expanded {
+    max-height: 120px;
+    opacity: 1;
+    padding: 12px 16px;
+  }
+
+  /* Desktop collapsed: show pill, hide expanded */
+  .profile-bubble:not(.expanded) {
+    border-radius: 50px;
+  }
+
+  .profile-bubble:not(.expanded) .profile-bubble-collapsed {
+    max-height: 50px;
+    opacity: 1;
+    padding: 6px 14px 6px 6px;
+  }
+
+  .profile-bubble:not(.expanded) .profile-bubble-expanded {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -594,16 +723,18 @@ body {
   transition: opacity 0.25s ease 0.1s, max-height 0.35s cubic-bezier(.4,0,.2,1), padding 0.35s cubic-bezier(.4,0,.2,1);
 }
 
-.profile-bubble.expanded {
-  border-radius: 20px;
-  width: 90vw;
-  max-width: 90vw;
+/* Mobile: expanded bubble takes 90vw */
+@media (max-width: 767.98px) {
+  .profile-bubble.expanded {
+    border-radius: 20px;
+    width: 90vw;
+    max-width: 90vw;
+  }
 }
 
-/* Disable interaction on palgram bubble */
+/* Palgram bubble: no expand/collapse but still tappable */
 .profile-bubble.palgram-mode {
   cursor: default;
-  pointer-events: none;
 }
 
 .profile-bubble.expanded .profile-bubble-expanded {
@@ -832,6 +963,9 @@ main.container {
   color: #fff;
   font-weight: 600;
   font-size: 0.85rem;
+  -webkit-backdrop-filter: blur(5px) saturate(1.8) brightness(1.1);
+  backdrop-filter: blur(5px) saturate(1.8) brightness(1.1);
+
 }
 
 @media (hover: hover) {
@@ -952,8 +1086,11 @@ main.container {
 
 .lightbox-info {
   overflow-y: auto;
-  background-color: var(--lightbox-info-bg) !important;
+  background: var(--lightbox-info-bg);
+    -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
   color: var(--text-primary);
+  
 }
 
 .lightbox-info hr {
@@ -1050,7 +1187,6 @@ main.container {
 #lightboxModal.lightbox-immersive .modal-content {
   width: 100vw;
   height: 100vh;
-  border-radius: 0;
   background: #000 !important;
 }
 
@@ -1101,7 +1237,9 @@ main.container {
   right: 0;
   bottom: 0;
   z-index: 1060;
-  background: var(--bg-primary);
+  background: var(--lightbox-info-bg);
+    -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -1129,7 +1267,9 @@ main.container {
   align-items: center;
   padding: 0.625rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  background: var(--bg-surface);
+    background: var(--lightbox-info-bg);
+    -webkit-backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
+  backdrop-filter: blur(40px) saturate(1.8) brightness(1.1);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -1214,7 +1354,7 @@ main.container {
   top: 8px;
   right: 8px;
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 1.25rem;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
   pointer-events: none;
   z-index: 2;
@@ -1626,12 +1766,172 @@ main.container {
   }
 }
 
+/* ---------- Secret Settings Modal (Liquid Glass) ---------- */
+.secret-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: secretFadeIn 0.25s ease;
+}
+
+@keyframes secretFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes secretSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.secret-modal {
+  width: 90%;
+  max-width: 360px;
+  border-radius: 20px;
+  overflow: hidden;
+  animation: secretSlideUp 0.3s ease;
+
+  /* Liquid glass – light */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.30) 50%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+  color: #1a1a1a;
+}
+
+.secret-modal-header {
+  padding: 1.25rem 1.25rem 0.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.secret-modal-body {
+  padding: 0.5rem 1.25rem 1rem;
+}
+
+.secret-modal-desc {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.secret-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.secret-modal-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-align: center;
+}
+
+.secret-modal-btn:active {
+  transform: scale(0.97);
+}
+
+.secret-modal-btn-primary {
+  background: rgba(0, 122, 255, 0.85);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+}
+
+.secret-modal-btn-primary:hover {
+  background: rgba(0, 122, 255, 1);
+}
+
+.secret-modal-btn-danger {
+  background: rgba(255, 59, 48, 0.85);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.25);
+}
+
+.secret-modal-btn-danger:hover {
+  background: rgba(255, 59, 48, 1);
+}
+
+.secret-modal-btn-secondary {
+  background: rgba(120, 120, 128, 0.16);
+  color: inherit;
+}
+
+.secret-modal-btn-secondary:hover {
+  background: rgba(120, 120, 128, 0.28);
+}
+
+.secret-modal-status {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(52, 199, 89, 0.15);
+  color: #248a3d;
+}
+
+.secret-modal-footer {
+  padding: 0 1.25rem 1.25rem;
+}
+
+/* Dark mode liquid glass */
+@media (prefers-color-scheme: dark) {
+  .secret-modal {
+    background: linear-gradient(
+      135deg,
+      rgba(60, 60, 67, 0.50) 0%,
+      rgba(40, 40, 45, 0.35) 50%,
+      rgba(60, 60, 67, 0.50) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+    color: #f5f5f5;
+  }
+
+  .secret-modal-status {
+    background: rgba(48, 209, 88, 0.15);
+    color: #30d158;
+  }
+}
+
 /* ---------- Footer ---------- */
-.site-footer, .site-footer a {
+.site-footer {
   text-align: center;
   padding: 2rem 1rem;
   margin-top: 2rem;
   font-size: 0.8rem;
   color: var(--text-secondary);
   border-top: 1px solid var(--border-color);
+}
+
+.site-footer a {
+  color: var(--text-secondary);
 }
